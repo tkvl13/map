@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naduri</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-1.11.0.js"></script>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=adf6j9fk15&submodules=geocoder"></script>
+
+    <style>
+        /* 초기화 */
+        *{margin:0;padding:0}
+        ul,li,ol{list-style:none;}
+        body{ width:1125px;height:2436px;}
+        header{width:100%; height:260px;}
+        /* 로고 */
+        #logo{text-align: center;}
+        /* 마이페이지  */
+        #mypage{position:absolute;top:0px; width: 140px; height:130px;  padding:20px; box-sizing: border-box;}
+        #mypage i{font-size: 110px;}
+        /* 코스등록 */
+        #write{position:absolute; top:0px; right:0; width: 140px; height:130px;  padding-left:10px; padding-top:10px; box-sizing: border-box;}
+        #write i{font-size: 110px;}
+        /* 주소 */
+        #address{height:120px; font-size:30px; border: 1px solid #333; box-sizing: border-box; border-left:0; border-right:0;}
+        /* 필터보기 */
+        #fillter{position:fixed; top:300px; right:50px;}
+        #fillter select {width:80px; height:40px; font-size: 20px;}
+        /* 풋터 */
+        footer{width:100%; height:100px; position:fixed; bottom:0; left:0; background:#333;}
+        footer h3{line-height: 100px; margin-left:50px;}
+    </style>
+</head>
+
+<body>
+<div id="wrap">
+    <!-- 헤더로 분류 모든 페이지 상단에 표기 -->
+    <header>
+        <h1 id="logo">
+            <img width="100px" height="120px" src="04.png" alt="logo">
+        </h1>
+        <nav id="mypage">
+            <i class="fas fa-bars"></i>
+        </nav>
+        <div id="write"><i class="fas fa-edit"></i></div>
+        <div id="addresss"></div>
+    </header>
+    <!-- 세션으로 표기 -->
+    <section>
+        <form id="fillter">
+            <select>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+            </select>
+        </form>
+    </section>
+    <!-- 모듈 페이지로 분류 -->
+    <div id="map" style="width:0px;height:0px;">
+
+    </div>
+    <section>
+        <div class="module">
+
+        </div>
+    </section>
+    <!-- footer페이지로 분류 모든 페이지에 삽입 -->
+    <footer>
+        <h3>Copyright<i class="far fa-copyright"></i> 2021. MI5.All rights reserved </h3>
+    </footer>
+
+</div>
+<script>
+    navigator.geolocation
+    {
+        //위치 정보를 얻기
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            // var aa = pos.coords.latitude;
+            // var bb = pos.coords.longitude;
+
+
+            //지도 생성
+            var map = new naver.maps.Map("map", {
+                center: new naver.maps.LatLng(pos.coords.latitude,pos.coords.longitude )
+                //center: new naver.maps.LatLng(pos.coords.latitude,pos.coords.longitude)
+            });
+
+            //주소 검색
+            function searchCoordinateToAddress(latlng) {
+                //역 지오 코딩
+                naver.maps.Service.reverseGeocode({
+                    //좌표 : latlng
+                    coords: latlng,
+                    // 그외 : 주소,도로명 주소
+                    orders: [
+                        naver.maps.Service.OrderType.ADDR,
+                        naver.maps.Service.OrderType.ROAD_ADDR
+                    ].join(',')
+                }, function(status, response) {
+                    if (status === naver.maps.Service.Status.ERROR) {
+                        if (!latlng) {
+                            return alert('ReverseGeocode Error, Please check latlng');
+                        }
+                        if (latlng.toString) {
+                            return alert('ReverseGeocode Error, latlng:' + latlng.toString());
+                        }
+                        if (latlng.x && latlng.y) {
+                            return alert('ReverseGeocode Error, x:' + latlng.x + ', y:' + latlng.y);
+                        }
+                        return alert('ReverseGeocode Error, Please check latlng');
+                    }
+                    //변수 address 는 response.v2.address랑 htmlAddressse[] 배열.
+                    var address = response.v2.address,htmlAddresses = [];
+
+                    if (address.jibunAddress !== '') {
+                        htmlAddresses.push('[지번 주소] ' + address.jibunAddress);
+                    }
+
+                    if (address.roadAddress !== '') {
+                        htmlAddresses.push('[도로명 주소] ' + address.roadAddress);
+                    }
+
+                    //이건 원래 클릭시 윈도우 나타내는 것
+                    // infoWindow.setContent([
+                    //     '<div style="padding:10px;min-width:200px;line-height:150%;">',
+                    //     '<h4 style="margin-top:5px;">검색 좌표</h4><br />',
+                    //     htmlAddresses.join('<br />'),
+                    //     '</div>'
+                    // ].join('\n'));
+
+                });
+            }
+            var address1;
+            function searchAddressToCoordinate(address) {
+                naver.maps.Service.geocode({
+                    query: address
+                }, function(status, response) {
+                    if (status === naver.maps.Service.Status.ERROR) {
+                        if (!address) {
+                            return alert('Geocode Error, Please check address');
+                        }
+                        return alert('Geocode Error, address:' + address);
+                    }
+
+                    if (response.v2.meta.totalCount === 0) {
+                        return alert('No result.');
+                    }
+
+                    var htmlAddresses = [],
+                            item = response.v2.addresses[0],
+                            point = new naver.maps.Point(item.x, item.y);
+                    if (item.roadAddress) {
+                        htmlAddresses.push('[도로명 주소] ' + item.roadAddress);
+                    }
+
+                    if (item.jibunAddress) {
+                        htmlAddresses.push('[지번 주소] ' + item.jibunAddress);
+                    }
+
+                    if (item.englishAddress) {
+                        htmlAddresses.push('[영문명 주소] ' + item.englishAddress);
+                    }
+                    $('#addresss').html(item.roadAddress);
+
+                    map.setCenter(point);
+                    infoWindow.open(map, point);
+
+                });
+                address1  = address;
+    alert(address1);
+            }
+            function initGeocoder() {
+                if (!map.isStyleMapReady) {
+                    return;
+                }
+
+                map.addListener('click', function(e) {
+                    searchCoordinateToAddress(e.coord);
+                });
+
+                $('#address').on('keydown', function(e) {
+                    var keyCode = e.which;
+
+                    if (keyCode === 13) { // Enter Key
+                        searchAddressToCoordinate($('#address').val());
+                    }
+                });
+
+                $('#submit').on('click', function(e) {
+                    e.preventDefault();
+
+                    searchAddressToCoordinate($('#address').val());
+
+                });
+                var b = "권선동 1193-2";
+                var c = "매탄동 896";
+                searchAddressToCoordinate(b);
+            }
+
+            naver.maps.onJSContentLoaded = initGeocoder;
+            naver.maps.Event.once(map,'init_stylemap', initGeocoder);
+
+
+        });
+    }
+</script>
+
+</body>
+</html>
