@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Kakao 지도 시작하기</title>
+    <script src="http://code.jquery.com/jquery-1.11.0.js"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=65fb4f71cdd4cb4731b5a14010195243"></script>
+    <style>
+        *{margin:0;padding:0;}
+        ul,li,ol{list-style:none;}
+        #map{width:300px; height:300px;}
+    </style>
+</head>
+
+<body>
+<div id="map"></div>
+<script>
+    $(function() {
+
+        // Geolocation API에 액세스할 수 있는지를 확인
+        if (navigator.geolocation) {
+            //위치 정보를 얻기
+            navigator.geolocation.getCurrentPosition (function(pos) {
+                $('#latitude').html(pos.coords.latitude);     // 위도
+                $('#longitude').html(pos.coords.longitude); // 경도
+                var container = document.getElementById('map');
+                var options = {
+                    center: new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
+                    level: 3
+                };
+                var map = new kakao.maps.Map(container,options);
+                //var geocoder = new kakao.maps.service.Geocoder();
+                //alert(geocoder);
+            });
+        } else {
+
+        }
+
+    });
+</script>
+
+<div>
+    <p>현재 나의 위치: <span> </span></p>
+    <ul>
+        <li><p>위도 : <span id="latitude"></span></p></li>
+        <li><p>경도 : <span id="longitude"></span></p></li>
+    </ul>
+</div>
+</body>
+</html>
